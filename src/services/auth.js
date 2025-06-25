@@ -22,7 +22,7 @@ export const registerUser = async (payload) => {
 export const loginUser = async (payload) => {
   const user = await User.findOne({ email: payload.email });
   if (!user) {
-    throw createHttpError(401, 'User not found');
+    throw createHttpError(404, 'User not found');
   }
 
   const isEqual = await bcrypt.compare(payload.password, user.password);
@@ -43,6 +43,49 @@ export const loginUser = async (payload) => {
     refreshToken,
     accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
     refreshTokenValidUntil: new Date(Date.now() + THIRTY_DAYS),
+  });
+};
+
+const createSession = () => {
+  const accessToken = randomBytes(30).toString('base64');
+  const refreshToken = randomBytes(30).toString('base64');
+
+  return {
+    accessToken,
+    refreshToken,
+    accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
+    refreshTokenValidUntil: new Date(Date.now() + THIRTY_DAYS),
+  };
+};
+
+export const refreshUserSession = async ({ sessionId, refreshToken }) => {
+  if (!Types.ObjectId.isValid(sessionId)) {
+    throw createHttpError(401, 'Session not found');
+  }
+
+  const session = await Session.findOne({
+    _id: new Types.ObjectId(sessionId),
+    refreshToken,
+  });
+
+  if (!session) {
+    throw createHttpError(401, 'Session not found');
+  }
+
+  const isSessionTokenExpired =
+    new Date() > new Date(session.refreshTokenValidUntil);
+
+  if (isSessionTokenExpired) {
+    throw createHttpError(401, 'Session token expired');
+  }
+
+  const newSession = createSession();
+
+  await Session.deleteOne({ _id: sessionId, refreshToken });
+
+  return await Session.create({
+    userId: session.userId,
+    ...newSession,
   });
 };
 
