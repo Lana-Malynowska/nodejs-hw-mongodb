@@ -39,6 +39,11 @@ export const authenticate = async (req, res, next) => {
   }
 
   req.user = user;
+  // req.user = {
+  //   _id: user._id,
+  //   name: user.name,
+  //   email: user.email,
+  // };
 
   next();
 };

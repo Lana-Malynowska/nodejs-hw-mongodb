@@ -6,7 +6,7 @@ import {
   registerUser,
 } from '../services/auth.js';
 
-export const registerUserController = async (req, res) => {
+export const registerUserController = async (req, res, next) => {
   const user = await registerUser(req.body);
 
   res.status(201).json({
@@ -16,7 +16,7 @@ export const registerUserController = async (req, res) => {
   });
 };
 
-export const loginUserController = async (req, res) => {
+export const loginUserController = async (req, res, next) => {
   const session = await loginUser(req.body);
 
   res.cookie('refreshToken', session.refreshToken, {
@@ -48,7 +48,7 @@ const setupSession = (res, session) => {
   });
 };
 
-export const refreshUserSessionController = async (req, res) => {
+export const refreshUserSessionController = async (req, res, next) => {
   const session = await refreshUserSession({
     sessionId: req.cookies.sessionId,
     refreshToken: req.cookies.refreshToken,
@@ -65,7 +65,7 @@ export const refreshUserSessionController = async (req, res) => {
   });
 };
 
-export const logoutUserController = async (req, res) => {
+export const logoutUserController = async (req, res, next) => {
   if (req.cookies.sessionId) {
     await logoutUser(req.cookies.sessionId);
   }
