@@ -1,10 +1,20 @@
-import { THIRTY_DAYS } from '../constants/index.js';
 import {
   loginUser,
   logoutUser,
   refreshUserSession,
   registerUser,
 } from '../services/auth.js';
+
+const setupSessionCookies = (session, res) => {
+  res.cookie('refreshToken', session.refreshToken, {
+    httpOnly: true,
+    expires: session.refreshTokenValidUntil,
+  });
+  res.cookie('sessionId', session._id, {
+    httpOnly: true,
+    expires: session.refreshTokenValidUntil,
+  });
+};
 
 export const registerUserController = async (req, res, next) => {
   const user = await registerUser(req.body);
@@ -19,14 +29,7 @@ export const registerUserController = async (req, res, next) => {
 export const loginUserController = async (req, res, next) => {
   const session = await loginUser(req.body);
 
-  res.cookie('refreshToken', session.refreshToken, {
-    httpOnly: true,
-    expires: new Date(Date.now() + THIRTY_DAYS),
-  });
-  res.cookie('sessionId', session._id, {
-    httpOnly: true,
-    expires: new Date(Date.now() + THIRTY_DAYS),
-  });
+  setupSessionCookies(session, res);
 
   res.status(200).json({
     status: 200,
@@ -37,24 +40,12 @@ export const loginUserController = async (req, res, next) => {
   });
 };
 
-const setupSession = (res, session) => {
-  res.cookie('refreshToken', session.refreshToken.toString(), {
-    httpOnly: true,
-    expires: new Date(Date.now() + THIRTY_DAYS),
-  });
-  res.cookie('sessionId', session._id.toString(), {
-    httpOnly: true,
-    expires: new Date(Date.now() + THIRTY_DAYS),
-  });
-};
-
 export const refreshUserSessionController = async (req, res, next) => {
-  const session = await refreshUserSession({
-    sessionId: req.cookies.sessionId,
-    refreshToken: req.cookies.refreshToken,
-  });
+  const { sessionId, refreshToken } = req.cookies;
 
-  setupSession(res, session);
+  const session = await refreshUserSession({ sessionId, refreshToken });
+
+  setupSessionCookies(session, res);
 
   res.status(200).json({
     status: 200,
@@ -66,9 +57,9 @@ export const refreshUserSessionController = async (req, res, next) => {
 };
 
 export const logoutUserController = async (req, res, next) => {
-  if (req.cookies.sessionId) {
-    await logoutUser(req.cookies.sessionId);
-  }
+  const { sessionId, refreshToken } = req.cookies;
+
+  await logoutUser(sessionId, refreshToken);
 
   res.clearCookie('sessionId');
   res.clearCookie('refreshToken');

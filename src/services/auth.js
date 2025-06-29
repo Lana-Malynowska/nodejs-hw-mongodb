@@ -5,46 +5,6 @@ import createHttpError from 'http-errors';
 import { User } from '../db/models/user.js';
 import { Session } from '../db/models/session.js';
 import { FIFTEEN_MINUTES, THIRTY_DAYS } from '../constants/index.js';
-import { Types } from 'mongoose';
-
-export const registerUser = async (payload) => {
-  const user = await User.findOne({ email: payload.email });
-  if (user) throw createHttpError(409, 'Email is in use');
-
-  const encryptedPassword = await bcrypt.hash(payload.password, 10);
-
-  return await User.create({
-    ...payload,
-    password: encryptedPassword,
-  });
-};
-
-export const loginUser = async (payload) => {
-  const user = await User.findOne({ email: payload.email });
-  if (!user) {
-    throw createHttpError(404, 'User not found');
-  }
-
-  const isEqual = await bcrypt.compare(payload.password, user.password);
-  if (!isEqual) {
-    throw createHttpError(401, 'Unauthorized');
-  }
-
-  // await Session.deleteOne({ userId: user._id });
-  await Session.deleteOne({ userId: user._id.toString() });
-
-  const accessToken = randomBytes(30).toString('base64');
-  const refreshToken = randomBytes(30).toString('base64');
-
-  return await Session.create({
-    // userId: user._id,
-    userId: user._id.toString(),
-    accessToken,
-    refreshToken,
-    accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
-    refreshTokenValidUntil: new Date(Date.now() + THIRTY_DAYS),
-  });
-};
 
 const createSession = () => {
   const accessToken = randomBytes(30).toString('base64');
@@ -58,13 +18,43 @@ const createSession = () => {
   };
 };
 
-export const refreshUserSession = async ({ sessionId, refreshToken }) => {
-  if (!Types.ObjectId.isValid(sessionId)) {
-    throw createHttpError(401, 'Session not found');
+export const registerUser = async (payload) => {
+  const existingUser = await User.findOne({ email: payload.email });
+
+  if (existingUser) {
+    throw createHttpError(409, 'Email in use');
   }
 
+  const hashedPassword = await bcrypt.hash(payload.password, 10);
+
+  const newUser = await User.create({
+    ...payload,
+    password: hashedPassword,
+  });
+
+  return newUser;
+};
+
+export const loginUser = async (payload) => {
+  const user = await User.findOne({ email: payload.email });
+
+  if (!user || !(await bcrypt.compare(payload.password, user.password))) {
+    throw createHttpError(401, 'User login and password does not match!');
+  }
+
+  await Session.findOneAndDelete({ userId: user._id });
+
+  const session = await Session.create({
+    ...createSession(),
+    userId: user._id,
+  });
+
+  return session;
+};
+
+export const refreshUserSession = async ({ sessionId, refreshToken }) => {
   const session = await Session.findOne({
-    _id: new Types.ObjectId(sessionId),
+    _id: sessionId,
     refreshToken,
   });
 
@@ -72,25 +62,24 @@ export const refreshUserSession = async ({ sessionId, refreshToken }) => {
     throw createHttpError(401, 'Session not found');
   }
 
-  const isSessionTokenExpired =
-    new Date() > new Date(session.refreshTokenValidUntil);
-
-  if (isSessionTokenExpired) {
+  if (session.refreshTokenValidUntil < new Date()) {
+    await Session.findByIdAndDelete(sessionId);
     throw createHttpError(401, 'Session token expired');
   }
 
-  const newSession = createSession();
+  await Session.findByIdAndDelete(sessionId);
 
-  await Session.deleteOne({ _id: sessionId, refreshToken });
-
-  return await Session.create({
+  const newSession = await Session.create({
     userId: session.userId,
-    ...newSession,
+    ...createSession(),
   });
+
+  return newSession;
 };
 
-export const logoutUser = async (sessionId) => {
-  if (!Types.ObjectId.isValid(sessionId)) return;
-
-  await Session.deleteOne({ _id: new Types.ObjectId(sessionId) });
+export const logoutUser = async (sessionId, refreshToken) => {
+  await Session.findOneAndDelete({
+    _id: sessionId,
+    refreshToken,
+  });
 };

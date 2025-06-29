@@ -61,14 +61,22 @@ export const updateContact = async (contactId, payload, userId) => {
     { new: true },
   );
 
+  if (!updatedContact) {
+    throw createHttpError(404, 'Contact not found');
+  }
+
   return updatedContact;
 };
 
 export const deleteContact = async (contactId, userId) => {
-  const contact = await ContactsCollection.findOneAndDelete({
+  const deletedContact = await ContactsCollection.findOneAndDelete({
     _id: contactId,
     userId,
   });
 
-  return contact;
+  if (!deletedContact) {
+    throw createHttpError(404, 'Contact not found');
+  }
+
+  return deletedContact;
 };
