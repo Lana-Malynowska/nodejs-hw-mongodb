@@ -7,12 +7,12 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   description: This is a documentation of contacts app
 tags:
-  - name: contacts
+  - name: Contacts
     description: Operations about contacts.
   - name: Auth
     description: Auth operations.
 servers:
-  # - url: http://localhost:3000
+  - url: http://localhost:3000
   - url: https://contacts-zchc.onrender.com
 paths:
   /contacts:
