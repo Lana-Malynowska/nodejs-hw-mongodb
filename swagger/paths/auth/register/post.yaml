@@ -1,0 +1,77 @@
+tags:
+  - Auth
+summary: Register a new user
+operationId: registerUser
+description: 'New user registration'
+security:
+  - bearerAuth: []
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - name
+          - email
+          - password
+        properties:
+          name:
+            type: string
+            example: 'John Doe'
+            description: "User's name"
+          email:
+            type: string
+            format: email
+            example: 'example@mail.com'
+            description: "User's email"
+          password:
+            type: string
+            example: 'password'
+            description: "User's password"
+responses:
+  '201':
+    description: Successfully registered a user!
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - status
+            - message
+            - data
+          properties:
+            status:
+              type: integer
+              example: 201
+            message:
+              type: string
+              example: Successfully registered a user!
+            data:
+              type: object
+              required:
+                - _id
+                - name
+                - email
+                - password
+              properties:
+                _id:
+                  type: string
+                  example: '6864078dd7bf6e2d65f4c607'
+                  description: 'User ID'
+                name:
+                  type: string
+                  example: 'John Doe'
+                  description: "User's name"
+                email:
+                  type: string
+                  format: email
+                  example: 'example@mail.com'
+                password:
+                  type: string
+                  example: 'password'
+
+  '409':
+    description: 'Email in use'
+  '400':
+    description: 'Bad request - validation error'
