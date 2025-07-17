@@ -4,6 +4,7 @@ required:
   - name
   - phoneNumber
   - contactType
+  - userId
 properties:
   _id:
     description: "Contact's id"
@@ -16,7 +17,7 @@ properties:
   phoneNumber:
     description: "Contact's phone number"
     type: string
-    example: +380123456789
+    example: '+380123456789'
   email:
     description: "Contact's email"
     type: string
@@ -29,17 +30,21 @@ properties:
     description: 'Type of contact'
     type: string
     enum: ['work', 'home', 'personal']
+  userId:
+    description: 'User ID the contact belongs to'
+    type: string
+    example: 6876d326523331823ad51394
   photo:
     description: "Link to contact's photo"
     type: string
     example: https://res.cloudinary.com/dcx2vdwpb/image/upload/v1752602032/samples/man-portrait.jpg
-  createdAt:
-    type: string
-    format: date-time
-    description: 'Date of creation'
-    example: '2025-07-16T09:35:40.669+00:00'
-  updatedAt:
-    type: string
-    format: date-time
-    description: 'Last update date'
-    example: '2025-07-16T09:35:40.669+00:00'
+  # createdAt:
+  #   type: string
+  #   format: date-time
+  #   description: 'Date of creation'
+  #   example: '2025-07-16T09:35:40.669+00:00'
+  # updatedAt:
+  #   type: string
+  #   format: date-time
+  #   description: 'Last update date'
+  #   example: '2025-07-16T09:35:40.669+00:00'

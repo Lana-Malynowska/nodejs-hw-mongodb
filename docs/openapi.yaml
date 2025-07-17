@@ -8,16 +8,25 @@ info:
   description: This is a documentation of contacts app
 tags:
   - name: contacts
-    description: Operations about users.
+    description: Operations about contacts.
   - name: Auth
     description: Auth operations.
 servers:
-  - url: http://localhost:3000
+  # - url: http://localhost:3000
   - url: https://contacts-zchc.onrender.com
 paths:
+  /contacts:
+    get:
+      $ref: ../swagger/paths/contacts/get.yaml
+    post:
+      $ref: ../swagger/paths/contacts/post.yaml
   /contacts/{id}:
     get:
       $ref: ../swagger/paths/contacts/{id}/get.yaml
+    patch:
+      $ref: ../swagger/paths/contacts/{id}/patch.yaml
+    delete:
+      $ref: ../swagger/paths/contacts/{id}/delete.yaml
 components:
   securitySchemes:
     bearerAuth:
